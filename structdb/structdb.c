@@ -18,7 +18,7 @@ typedef enum
 } data_type_t;
 
 /*
-    field info struct to store info about a field in a
+    Field info struct to store info about a field in a
     given struct in companion C application.
 */
 typedef struct _field_info_
@@ -31,8 +31,9 @@ typedef struct _field_info_
 } field_info_t;
 
 /*
-   struct to store info about struct being registered
-   by companion C application. Linked-List.
+   Struct to store info about struct being registered
+   by companion C application. Underlying data structure
+   is a Linked-List.
    (i.e. structure database record)
 */
 typedef struct _struct_db_rec_ struct_db_rec_t;

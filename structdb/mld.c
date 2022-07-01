@@ -8,9 +8,9 @@ char *d_type_to_string(data_type_t d_type)
 {
     switch(d_type)
     {
-        case UINT8: return "Unsigned Integer, 8-bits";
-        case UINT32: return "Unsigned Integer, 32-bits";
-        case INT32: return "Integer, 32-bits";
+        case UINT8: return "Unsigned Integer, 8-bytes";
+        case UINT32: return "Unsigned Integer, 32-bytes";
+        case INT32: return "Integer, 32-bytes";
         case CHAR: return "Character";
         case OBJ_PTR: return "Object Pointer";
         case FLOAT: return "Float";
@@ -44,7 +44,9 @@ void print_structure_rec(struct_db_rec_t *struct_rec)
     for (i = 0; i < struct_rec->n_fields; ++i) {
         printf("\t\tFIELD %d\n", i);
         print_field(struct_rec->fields[i]);
+        printf("-------------------------");
     }
+    printf("\n");
 }
 
 void print_structure_db(struct_db_t *struct_db)

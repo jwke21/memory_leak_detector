@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "mld.h"
 
 
@@ -54,7 +55,7 @@ void print_structure_db(struct_db_t *struct_db)
     struct_db_rec_t *cur_rec;
     int i;
 
-    cur_rec = struct_db;
+    cur_rec = struct_db->head;
     for (i = 0; i < struct_db->count; ++i) {
         print_structure_rec(cur_rec);
         cur_rec = cur_rec->next;

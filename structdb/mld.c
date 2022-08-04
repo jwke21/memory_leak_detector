@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+
 #include "mld.h"
 
 
@@ -80,8 +82,7 @@ int add_struct_to_db(struct_db_t *struct_db, struct_db_rec_t *struct_record)
 
     if (!cur_rec) {
         struct_db->head = struct_record;
-    }
-    else {
+    } else {
         while (cur_rec->next) {
             cur_rec = cur_rec->next;
         }

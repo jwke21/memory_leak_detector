@@ -100,7 +100,7 @@ int add_struct_to_db(struct_db_t *struct_db, struct_db_rec_t *struct_record);
 */
 #define FIELD_INFO(struct_name, fld_name, data_type, nested_struct_name) \
         {                                                                \
-            #field_name,                                                 \
+            #fld_name,                                                 \
             FIELD_SIZE(struct_name, fld_name),                           \
             OFFSET_OF(struct_name, fld_name),                            \
             data_type,                                                   \

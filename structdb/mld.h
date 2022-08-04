@@ -1,7 +1,7 @@
+#ifndef __MLD__
+
 #define MAX_STRUCTURE_NAME_SIZE 128
 #define MAX_FIELD_NAME_SIZE     128
-
-#ifndef __MLD__
 
 /*
     Enums to identify data type of fields in
@@ -53,7 +53,6 @@ typedef struct _field_info_
     char nested_str_name [MAX_STRUCTURE_NAME_SIZE];
 } field_info_t;
 
-
 struct _struct_db_rec_
 {
     struct_db_rec_t *next;  /* Pointer to the next struct in the db */
@@ -70,11 +69,11 @@ typedef struct _struct_db_
     unsigned int count;
 } struct_db_t;
 
-/* Structure db definition ends */
+/***** Structure db definition ends *****/
 
-/* Printing functions */
+/***** Printing functions *****/
 
-/* 
+/*
    Prints all info stored by a given struct record.
 */
 void print_structure_rec(struct_db_rec_t *struct_rec);
@@ -84,5 +83,14 @@ void print_structure_rec(struct_db_rec_t *struct_rec);
    record database.
 */
 void print_structure_db(struct_db_t *srtuct_db);
+
+
+/***** Functions to manage records in db *****/
+
+/*
+    Adds a given struct record to the struct database.
+    Returns 0 on success, -1 on failure.
+*/
+int add_struct_to_db(struct_db_t *struct_db, struct_db_rec_t *struct_record);
 
 #endif /* __MLD__ */

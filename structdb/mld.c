@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "mld.h"
 
@@ -11,15 +12,15 @@ char *d_type_to_string(data_type_t d_type)
 {
     switch(d_type)
     {
-        case UINT8: return "Unsigned Integer, 8-bytes";
-        case UINT32: return "Unsigned Integer, 32-bytes";
-        case INT32: return "Integer, 32-bytes";
-        case CHAR: return "Character";
-        case OBJ_PTR: return "Object Pointer";
-        case FLOAT: return "Float";
-        case DOUBLE: return "Double";
-        case OBJ_STRUCT: return "Struct Pointer";
-        default: return "N/A";
+        case UINT8:      return "UINT8";
+        case UINT32:     return "UINT32";
+        case INT32:      return "INT32";
+        case CHAR:       return "CHAR";
+        case OBJ_PTR:    return "OBJ_PTR";
+        case FLOAT:      return "FLOAT";
+        case DOUBLE:     return "DOUBLE";
+        case OBJ_STRUCT: return "STRUCT_PTR";
+        default:         return "N/A";
     }
 }
 
@@ -28,11 +29,15 @@ char *d_type_to_string(data_type_t d_type)
 */
 void print_field(field_info_t *fld_info)
 {
-    printf("Field name: %s \t|\t",       fld_info->fname);
-    printf("Field size: %ul \t|\t",      fld_info->size);
-    printf("Field offset: %ul \t|\t",    fld_info->offset);
-    printf("Field data type: %s \t|\t",  d_type_to_string(fld_info->dtype));
-    printf("Nested struct: %s \t|\t\n",  fld_info->nested_str_name);
+    printf("Field name: %20s | %5s",       fld_info->fname, "");
+    printf("Field size: %5d | %5s",        fld_info->size, "");
+    printf("Field offset: %10d | %5s",     fld_info->offset, "");
+    printf("Field data type: %10s | %5s",  d_type_to_string(fld_info->dtype), "");
+
+    if (strcmp(fld_info->nested_str_name, "0") == 0)
+        printf("Nested struct: %10s  |\n", "N/A");
+    else
+        printf("Nested struct: %10s  |\n",  fld_info->nested_str_name);
 }
 
 /*
@@ -42,17 +47,19 @@ void print_structure_rec(struct_db_rec_t *struct_rec)
 {
     if (!struct_rec) return;
 
-    printf("Structure Name:   \t%s\n\n", struct_rec->struct_name);
-    printf("Structure Size:   \t%ul\n", struct_rec->ds_size);
-    printf("Number of Fields: \t%ul\n", struct_rec->n_fields);
+    printf("Structure Name: %20s\n",   struct_rec->struct_name);
+    printf("Structure Size: %20d\n",     struct_rec->ds_size);
+    printf("Number of Fields: %18d\n\n", struct_rec->n_fields);
 
     int i;
     field_info_t *field;
+    
     for (i = 0; i < struct_rec->n_fields; ++i) {
         field = &struct_rec->fields[i];
-        printf("\t\tFIELD %d\n", i++);
+        printf("%68s FIELD %d \n", "", i+1);
         print_field(field);
-        printf("-------------------------");
+        
+        printf("----------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
     }
     printf("\n");
 }
@@ -64,7 +71,7 @@ void print_structure_db(struct_db_t *struct_db)
 
     cur_rec = struct_db->head;
     for (i = 0; i < struct_db->count; ++i) {
-        printf("Struct No: %d\n", i++);
+        printf("\nStructure Number: %5d\n\n", i+1);
         print_structure_rec(cur_rec);
         cur_rec = cur_rec->next;
     }

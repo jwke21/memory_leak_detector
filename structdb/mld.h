@@ -1,8 +1,9 @@
 /*
-    Dependencies: stdlib.h, stdio.h.
+    Dependencies: assert.h, stdlib.h, stdio.h.
 */
 
 #ifndef __MLD__
+#include <assert.h>
 
 #define MAX_STRUCTURE_NAME_SIZE 128
 #define MAX_FIELD_NAME_SIZE     128
@@ -33,6 +34,9 @@ typedef enum
 
 #define FIELD_SIZE(struct_name, fld_name) \
         sizeof(((struct_name *)0)->fld_name)
+
+
+typedef struct _struct_db_rec_ struct_db_rec_t;
 
 /*
     Struct to store info about a field in a
@@ -111,12 +115,12 @@ int add_struct_to_db(struct_db_t *struct_db, struct_db_rec_t *struct_record);
     Macro containing procedure to register given struct, with the given fields,
     in the given struct db.
 */
-#define REGISTER_STRUCT(struct_db, added_struct_name, fields_array)                 \
+#define REGISTER_STRUCT(struct_db, added_struct_name, num_fields, fields_array)     \
     do {                                                                            \
         struct_db_rec_t *record = calloc(1, sizeof(struct_db_rec_t));               \
         strncpy(record->struct_name, #added_struct_name, MAX_STRUCTURE_NAME_SIZE);  \
         record->ds_size = sizeof(added_struct_name);                                \
-        record->n_fields = sizeof(fields_array) / sizeof(field_info_t);             \
+        record->n_fields = num_fields;                                              \
         record->fields = fields_array;                                              \
         if (add_struct_to_db(struct_db, record)) {                                  \
             assert(0);                                                              \

@@ -99,27 +99,28 @@ int add_struct_to_db(struct_db_t *struct_db, struct_db_rec_t *struct_record);
     If there is no nested struct, set its value to 0.
 */
 #define FIELD_INFO(struct_name, fld_name, data_type, nested_struct_name) \
-        {                                                                \
-            #fld_name,                                                 \
-            FIELD_SIZE(struct_name, fld_name),                           \
-            OFFSET_OF(struct_name, fld_name),                            \
-            data_type,                                                   \
-            #nested_struct_name                                          \
-        }
+    {                                                                    \
+        #fld_name,                                                       \
+        FIELD_SIZE(struct_name, fld_name),                               \
+        OFFSET_OF(struct_name, fld_name),                                \
+        data_type,                                                       \
+        #nested_struct_name                                              \
+    }
 
 /*
     Macro containing procedure to register given struct, with the given fields,
     in the given struct db.
 */
-#define REGISTER_STRUCT(struct_db, struct_name, fields_array)                   \
-        do {                                                                    \
-            struct_db_rec_t *record = calloc(1, sizeof(struct_db_rec_t));       \
-            strncpy(record->struct_name, struct_name, MAX_STRUCTURE_NAME_SIZE); \
-            record->ds_size = sizeof(struct_name);                              \
-            record->n_fields = sizeof(fields_array) / sizeof(field_info_t);     \
-            if (add_struct_to_db(struct_db, record)) {                          \
-                assert(0);                                                      \
-            }                                                                   \
-        } while (0);
+#define REGISTER_STRUCT(struct_db, added_struct_name, fields_array)                 \
+    do {                                                                            \
+        struct_db_rec_t *record = calloc(1, sizeof(struct_db_rec_t));               \
+        strncpy(record->struct_name, #added_struct_name, MAX_STRUCTURE_NAME_SIZE);  \
+        record->ds_size = sizeof(added_struct_name);                                \
+        record->n_fields = sizeof(fields_array) / sizeof(field_info_t);             \
+        record->fields = fields_array;                                              \
+        if (add_struct_to_db(struct_db, record)) {                                  \
+            assert(0);                                                              \
+        }                                                                           \
+    } while (0);
 
 #endif /* __MLD__ */

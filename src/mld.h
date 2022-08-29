@@ -173,7 +173,12 @@ void print_obj_db_rec(object_db_rec_t *obj_rec, int index);
 */
 void print_obj_db(object_db_t *obj_db);
 
-/***** mld_calloc definition *****/
+/*
+    Prints the values of all the given object record's fields.
+*/
+void mld_dump_object_rec_detail(object_db_rec_t *obj_rec);
+
+/***** Memory allocation functions *****/
 
 /*
     Custom calloc to be used with MLD library in order for companion C app
@@ -189,6 +194,11 @@ void print_obj_db(object_db_t *obj_db);
         emp_t *emp = calloc(1, sizeof(emp_t));
 */
 void *mld_calloc(object_db_t *object_db, char *struct_name, int units);
+
+/*
+    Frees the given object from the object db.
+*/
+void mld_free(object_db_t *object_db, void *object);
 
 
 #endif /* __MLD__ */

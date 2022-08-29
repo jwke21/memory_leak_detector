@@ -154,20 +154,20 @@ void print_obj_db(object_db_t *obj_db)
 
 /*
     Determines whether the given object pointer is in the object_db.
-    Returns 0 if the object is not in the db, 1 if it is.
+    Returns the objects record if in db, otherwise returns NULL.
 */
-int is_in_obj_db(object_db_t *object_db, void *obj)
+object_db_rec_t *find_obj_rec(object_db_t *object_db, void *obj)
 {
     object_db_rec_t *cur_rec = object_db->head;
 
     while (cur_rec) {
-        if (cur_rec == obj) {
-            return 1;
+        if (cur_rec->obj_ptr == obj) {
+            return cur_rec;
         }
         cur_rec = cur_rec->next;
     }
 
-    return 0;
+    return NULL;
 }
 
 
@@ -180,7 +180,8 @@ int add_obj_to_db(object_db_t *object_db, void *object, int units, struct_db_rec
     if (!object_db || !object || !struct_rec) return -1;
 
     // Check that the object is not already in db.
-    assert(!is_in_obj_db(object_db, object));
+    object_db_rec_t *match = find_obj_rec(object_db, object);
+    assert(!match);
 
     object_db_rec_t *obj_rec = calloc(units, sizeof(object_db_rec_t));
 
@@ -211,4 +212,88 @@ void *mld_calloc(object_db_t *object_db, char *struct_name, int units)
         assert(0);
     }
     return allocated_obj;
+}
+
+void mld_dump_object_rec_detail(object_db_rec_t *obj_rec)
+{
+    if (!obj_rec) return;
+
+    int i, j;
+    int n_fields = obj_rec->struct_rec->n_fields;
+    int units = obj_rec->units;
+    char *struct_name;
+    char *field_name;
+    char *cur_object;
+    unsigned int offset;
+
+
+    for (i=0; i < units; i++) {
+        cur_object = obj_rec->obj_ptr + (i * obj_rec->struct_rec->ds_size);
+        
+        for (i=0; i < n_fields; i++) {
+            struct_name = obj_rec->struct_rec->struct_name;
+            field_name = obj_rec->struct_rec->fields[i].fname;
+            offset = obj_rec->struct_rec->fields[i].offset;
+
+            // printf format: [struct_name]->[field]->[field_value]
+            switch (obj_rec->struct_rec->fields[i].dtype) {
+                case UINT8:
+                case UINT32:
+                    printf("%s->%s==%u\n", struct_name, field_name, *(unsigned int *)(obj_rec->obj_ptr + offset));
+                    break;
+                case INT32:
+                    printf("%s->%s==%d\n", struct_name, field_name, *(int *)(obj_rec->obj_ptr + offset));
+                    break;
+                case CHAR:
+                    printf("%s->%s==%s\n", struct_name, field_name, (char *)(obj_rec->obj_ptr + offset));
+                    break;
+                case OBJ_PTR:
+                    printf("%s->%s==%p\n", struct_name, field_name, (void *)(obj_rec->obj_ptr + offset));
+                    break;
+                case FLOAT:
+                    printf("%s->%s==%f\n", struct_name, field_name, *(float *)(obj_rec->obj_ptr + offset));
+                    break;
+                case DOUBLE:
+                    printf("%s->%s==%f\n", struct_name, field_name, *(double *)(obj_rec->obj_ptr + offset));
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+}
+
+void remove_obj_rec_from_db(object_db_t *object_db, object_db_rec_t *obj_rec)
+{
+    assert(object_db);
+    assert(obj_rec);
+
+    object_db_rec_t *cur_rec = object_db->head;
+    // Remove record from object db
+    if (cur_rec == obj_rec) {
+        object_db->head = obj_rec->next;
+    } else {
+        while (cur_rec->next != obj_rec) {
+            cur_rec = cur_rec->next;
+        }
+        cur_rec->next = obj_rec->next;
+    }
+    object_db->count--;
+    free(obj_rec);
+}
+
+void mld_free(object_db_t *object_db, void *object)
+{
+    if (!object_db || !object) return;
+
+    object_db_rec_t *obj_rec;
+
+    obj_rec = find_obj_rec(object_db, object);
+
+    assert(obj_rec);
+
+    // Free object
+    free(obj_rec->obj_ptr);
+
+    remove_obj_rec_from_db(object_db, obj_rec);
 }

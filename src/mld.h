@@ -127,4 +127,50 @@ int add_struct_to_db(struct_db_t *struct_db, struct_db_rec_t *struct_record);
         }                                                                           \
     } while (0);
 
+
+/***** Object db structs *****/
+
+
+/*
+    Structure to store info about an object malloc'd (or calloc'd)
+    by companion C application.
+*/
+typedef struct _object_db_rec_
+{
+    object_db_rec_t *next;
+    void *obj_ptr;               // Pointer to C app object associated with record.
+    unsigned int units;          // Number of objects of the record calloc'd.
+    struct_db_rec_t *struct_rec; // struct_db record associated with object.
+} object_db_rec_t;
+
+
+/*
+    Object database struct (linked list).
+*/
+typedef struct _object_db_
+{
+    struct_db_t *struct_db;
+    object_db_rec_t *head;
+    unsigned int count;
+} object_db_t;
+
+
+/***** Object db definition ends *****/
+
+/***** mld_calloc definition *****/
+
+/*
+    Custom calloc to be used with MLD library in order for companion C app
+    to allocate memory for an object in a way that enables MLD library to
+    track whether it's been free'd.
+
+    example usage:
+        emp_t *emp = mld_calloc(obj_db_ptr, "emp_t", 1);
+    is equivalent with:
+        emp_t *emp = calloc(1, sizeof(emp_t));
+*/
+void *mld_calloc(object_db_t *object_db, char *struct_name, int units);
+
+/***** mld_calloc definition ends *****/
+
 #endif /* __MLD__ */

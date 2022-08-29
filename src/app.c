@@ -60,5 +60,19 @@ int main(int argc, char **argv)
     REGISTER_STRUCT(struct_db, student_t, stud_fiels)
 
     print_structure_db(struct_db);
+
+
+    /* Initialize a new object db */
+    object_db_t *object_db = calloc(1, sizeof(object_db_t));
+    object_db->struct_db = struct_db;
+
+    /* Example objects registered with object db */
+    emp_t *example_employee1 = mld_calloc(object_db, "emp_t", 1);
+    emp_t *example_employee2 = mld_calloc(object_db, "emp_t", 3);
+    student_t *example_stud1 = mld_calloc(object_db, "student_t", 2);
+    student_t *example_stud2 = mld_calloc(object_db, "student_t", 1);
+
+    print_obj_db(object_db);
+
     return 0;
 }

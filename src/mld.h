@@ -76,7 +76,7 @@ typedef struct _struct_db_
 
 /***** Structure db definition ends *****/
 
-/***** Printing functions *****/
+/***** Printing functions for struct db *****/
 
 /*
    Prints all info stored by a given struct record.
@@ -128,20 +128,26 @@ int add_struct_to_db(struct_db_t *struct_db, struct_db_rec_t *struct_record);
     } while (0);
 
 
-/***** Object db structs *****/
 
+
+
+
+
+/***** Object db structs *****/
 
 /*
     Structure to store info about an object malloc'd (or calloc'd)
     by companion C application.
 */
-typedef struct _object_db_rec_
+typedef struct _object_db_rec_ object_db_rec_t;
+
+struct _object_db_rec_
 {
     object_db_rec_t *next;
     void *obj_ptr;               // Pointer to C app object associated with record.
     unsigned int units;          // Number of objects of the record calloc'd.
     struct_db_rec_t *struct_rec; // struct_db record associated with object.
-} object_db_rec_t;
+};
 
 
 /*
@@ -155,7 +161,17 @@ typedef struct _object_db_
 } object_db_t;
 
 
-/***** Object db definition ends *****/
+/***** Printing functions for struct db *****/
+
+/*
+   Prints all info stored by a given object record.
+*/
+void print_obj_db_rec(object_db_rec_t *obj_rec, int index);
+
+/*
+   Prints all object records in a given object record db.
+*/
+void print_obj_db(object_db_t *obj_db);
 
 /***** mld_calloc definition *****/
 
@@ -164,6 +180,9 @@ typedef struct _object_db_
     to allocate memory for an object in a way that enables MLD library to
     track whether it's been free'd.
 
+    RETURNS
+        Pointer to allocated object, or NULL if the allocation failed.
+
     example usage:
         emp_t *emp = mld_calloc(obj_db_ptr, "emp_t", 1);
     is equivalent with:
@@ -171,6 +190,5 @@ typedef struct _object_db_
 */
 void *mld_calloc(object_db_t *object_db, char *struct_name, int units);
 
-/***** mld_calloc definition ends *****/
 
 #endif /* __MLD__ */

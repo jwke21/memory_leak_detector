@@ -55,13 +55,13 @@ void print_structure_rec(struct_db_rec_t *struct_rec)
     field_info_t *field;
     
     for (i = 0; i < struct_rec->n_fields; ++i) {
+        printf("----------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
         field = &struct_rec->fields[i];
         printf("%68s FIELD %d \n", "", i+1);
         print_field(field);
         
-        printf("----------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
     }
-    printf("\n");
+    printf("----------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
 }
 
 void print_structure_db(struct_db_t *struct_db)
@@ -75,6 +75,7 @@ void print_structure_db(struct_db_t *struct_db)
         print_structure_rec(cur_rec);
         cur_rec = cur_rec->next;
     }
+    printf("\n");
 }
 
 /*
@@ -120,4 +121,94 @@ struct_db_rec_t *struct_db_look_up(struct_db_t *struct_db, char *struct_name)
     }
 
     return NULL;
+}
+
+void print_obj_db_rec(object_db_rec_t *obj_rec, int index)
+{
+    if (!obj_rec) return;
+
+    printf("------------------------------------------------------------------------\n");
+    printf("| %-3d | memory_loc = %-10p | units = %4d | name = %-10s |\n",
+           index, obj_rec->obj_ptr, obj_rec->units, obj_rec->struct_rec->struct_name);
+}
+
+void print_obj_db(object_db_t *obj_db)
+{
+    if (!obj_db) return;
+    
+    object_db_rec_t *cur_rec;
+    int i;
+
+    printf("Total registered objects: %-3d\n\n", obj_db->count);
+
+    cur_rec = obj_db->head;
+    i = 1;
+    while(cur_rec) {
+        print_obj_db_rec(cur_rec, i);
+        cur_rec = cur_rec->next;
+        i++;
+    }
+
+    printf("------------------------------------------------------------------------\n\n");
+}
+
+/*
+    Determines whether the given object pointer is in the object_db.
+    Returns 0 if the object is not in the db, 1 if it is.
+*/
+int is_in_obj_db(object_db_t *object_db, void *obj)
+{
+    object_db_rec_t *cur_rec = object_db->head;
+
+    while (cur_rec) {
+        if (cur_rec == obj) {
+            return 1;
+        }
+        cur_rec = cur_rec->next;
+    }
+
+    return 0;
+}
+
+
+/*
+    Adds a given object record to the given object database.
+    Returns 0 on success, -1 on failure.
+*/
+int add_obj_to_db(object_db_t *object_db, void *object, int units, struct_db_rec_t *struct_rec)
+{
+    if (!object_db || !object || !struct_rec) return -1;
+
+    // Check that the object is not already in db.
+    assert(!is_in_obj_db(object_db, object));
+
+    object_db_rec_t *obj_rec = calloc(units, sizeof(object_db_rec_t));
+
+    obj_rec->next = object_db->head;
+    obj_rec->obj_ptr = object;
+    obj_rec->struct_rec = struct_rec;
+    obj_rec->units = units;
+
+    object_db->head = obj_rec;
+    object_db->count++;
+
+    return 0;
+}
+
+
+void *mld_calloc(object_db_t *object_db, char *struct_name, int units)
+{
+    if (!object_db || !struct_name) return NULL;
+
+    // Get associated struct record from struct db.
+    struct_db_rec_t *struct_rec = struct_db_look_up(object_db->struct_db, struct_name);
+    // Check that associated struct record exists.
+    assert(struct_rec);
+    // Allocate space for the object.
+    void *allocated_obj = calloc(units, struct_rec->ds_size);
+    // Add object to object db.
+    if (add_obj_to_db(object_db, allocated_obj, units, struct_rec)) {
+        assert(0);
+    }
+    return allocated_obj;
 }

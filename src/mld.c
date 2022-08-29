@@ -105,7 +105,9 @@ int add_struct_to_db(struct_db_t *struct_db, struct_db_rec_t *struct_record)
 
 /*
     Finds the given struct in the given struct_db.
-    Returns the matching struct_db_rec_t pointer if found, NULL if not found.
+    
+    RETURNS
+        Matching struct_db_rec_t pointer if found, NULL if not found.
 */
 struct_db_rec_t *struct_db_look_up(struct_db_t *struct_db, char *struct_name)
 {
@@ -175,7 +177,7 @@ object_db_rec_t *find_obj_rec(object_db_t *object_db, void *obj)
     Adds a given object record to the given object database.
     Returns 0 on success, -1 on failure.
 */
-int add_obj_to_db(object_db_t *object_db, void *object, int units, struct_db_rec_t *struct_rec)
+int add_obj_to_db(object_db_t *object_db, void *object, int units, struct_db_rec_t *struct_rec, mld_boolean_t is_root)
 {
     if (!object_db || !object || !struct_rec) return -1;
 
@@ -189,6 +191,8 @@ int add_obj_to_db(object_db_t *object_db, void *object, int units, struct_db_rec
     obj_rec->obj_ptr = object;
     obj_rec->struct_rec = struct_rec;
     obj_rec->units = units;
+    obj_rec->visited = MLD_FALSE;
+    obj_rec->is_root = is_root;
 
     object_db->head = obj_rec;
     object_db->count++;
@@ -207,8 +211,8 @@ void *mld_calloc(object_db_t *object_db, char *struct_name, int units)
     assert(struct_rec);
     // Allocate space for the object.
     void *allocated_obj = calloc(units, struct_rec->ds_size);
-    // Add object to object db.
-    if (add_obj_to_db(object_db, allocated_obj, units, struct_rec)) {
+    // Add object to object db. Object is not considered root by default.
+    if (add_obj_to_db(object_db, allocated_obj, units, struct_rec, MLD_FALSE)) {
         assert(0);
     }
     return allocated_obj;
@@ -256,6 +260,8 @@ void mld_dump_object_rec_detail(object_db_rec_t *obj_rec)
                 case DOUBLE:
                     printf("%s->%s==%f\n", struct_name, field_name, *(double *)(obj_rec->obj_ptr + offset));
                     break;
+                case OBJ_STRUCT:
+                    break;
                 default:
                     break;
             }
@@ -297,3 +303,29 @@ void mld_free(object_db_t *object_db, void *object)
 
     remove_obj_rec_from_db(object_db, obj_rec);
 }
+
+void register_root_object(object_db_t *object_db, void *object, char *struct_name, unsigned int units)
+{
+    assert(object_db);
+    assert(object);
+    assert(struct_name);
+
+    struct_db_rec_t *struct_rec = struct_db_look_up(object_db->struct_db, struct_name);
+    assert(struct_rec);
+
+    add_obj_to_db(object_db, object, units, struct_rec, MLD_TRUE);
+}
+
+
+void add_object_as_global_root(object_db_t *object_db, void *object)
+{
+    assert(object_db);
+    assert(object);
+
+    object_db_rec_t *obj_rec = find_obj_rec(object_db, object);
+    assert(obj_rec);
+
+    obj_rec->is_root = MLD_TRUE;
+}
+
+

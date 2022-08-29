@@ -24,6 +24,15 @@ typedef enum
     OBJ_STRUCT  // pointer to another struct
 } data_type_t;
 
+/*
+    Enums to identify booleans.
+*/
+typedef enum
+{
+    MLD_FALSE,
+    MLD_TRUE
+} mld_boolean_t;
+
 /* 
    Casts null struct (i.e. 0) as struct pointer,
    accesses target field, casts as int to get
@@ -147,6 +156,8 @@ struct _object_db_rec_
     void *obj_ptr;               // Pointer to C app object associated with record.
     unsigned int units;          // Number of objects of the record calloc'd.
     struct_db_rec_t *struct_rec; // struct_db record associated with object.
+    mld_boolean_t visited;       // For graph traversal.
+    mld_boolean_t is_root;       // Whether the object is a root object.
 };
 
 
@@ -199,6 +210,26 @@ void *mld_calloc(object_db_t *object_db, char *struct_name, int units);
     Frees the given object from the object db.
 */
 void mld_free(object_db_t *object_db, void *object);
+
+
+/***** Root object functions *****/
+
+/*
+    Registers an object already in the object db (i.e. already allocated with mld_calloc) as root.
+*/
+void register_root_object(object_db_t *object_db, void *object, char *struct_name, unsigned int units);
+
+/*
+    Allocates an object, adds it to the object db and sets it to root.
+*/
+void add_object_as_global_root(object_db_t *object_db, void *object);
+
+
+/***** Memory leak detection functions *****/
+
+void run_mld_check(object_db_t *object_db);
+
+void print_leaked_objects(object_db_t *object_db);
 
 
 #endif /* __MLD__ */

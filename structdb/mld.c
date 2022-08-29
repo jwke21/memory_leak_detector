@@ -101,3 +101,23 @@ int add_struct_to_db(struct_db_t *struct_db, struct_db_rec_t *struct_record)
     
     return 0;
 }
+
+/*
+    Finds the given struct in the given struct_db.
+    Returns the matching struct_db_rec_t pointer if found, NULL if not found.
+*/
+struct_db_rec_t *struct_db_look_up(struct_db_t *struct_db, char *struct_name)
+{
+    if (!struct_db || !struct_name) return NULL;
+
+    struct_db_rec_t *cur_rec = struct_db->head;
+
+    while (cur_rec) {
+        if (strcmp(cur_rec->struct_name, struct_name) == 0) {
+            return cur_rec;
+        }
+        cur_rec = cur_rec->next;
+    }
+
+    return NULL;
+}

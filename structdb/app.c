@@ -46,7 +46,7 @@ int main(int argc, char **argv)
         FIELD_INFO(emp_t, salary, FLOAT, 0)
     };
     /* Register employee struct in structure db */
-    REGISTER_STRUCT(struct_db, emp_t, 5, emp_fields)
+    REGISTER_STRUCT(struct_db, emp_t, emp_fields)
 
     /* Create array for student fields */
     static field_info_t stud_fiels[] = {
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
         FIELD_INFO(student_t, best_classmate, OBJ_PTR, student_t)
     };
     /* Register student struct in structure db */
-    REGISTER_STRUCT(struct_db, student_t, 5, stud_fiels)
+    REGISTER_STRUCT(struct_db, student_t, stud_fiels)
 
     print_structure_db(struct_db);
     return 0;

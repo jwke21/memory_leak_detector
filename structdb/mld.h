@@ -100,7 +100,7 @@ int add_struct_to_db(struct_db_t *struct_db, struct_db_rec_t *struct_record);
 
 /*
     Instantiates a field_info_t struct from the given info about the field.
-    If there is no nested struct, set its value to 0.
+    If there is no nested struct, set its value to 0 (i.e. NULL).
 */
 #define FIELD_INFO(struct_name, fld_name, data_type, nested_struct_name) \
     {                                                                    \
@@ -115,12 +115,12 @@ int add_struct_to_db(struct_db_t *struct_db, struct_db_rec_t *struct_record);
     Macro containing procedure to register given struct, with the given fields,
     in the given struct db.
 */
-#define REGISTER_STRUCT(struct_db, added_struct_name, num_fields, fields_array)     \
+#define REGISTER_STRUCT(struct_db, added_struct_name, fields_array)                 \
     do {                                                                            \
         struct_db_rec_t *record = calloc(1, sizeof(struct_db_rec_t));               \
         strncpy(record->struct_name, #added_struct_name, MAX_STRUCTURE_NAME_SIZE);  \
         record->ds_size = sizeof(added_struct_name);                                \
-        record->n_fields = num_fields;                                              \
+        record->n_fields = sizeof(fields_array)/sizeof(field_info_t);               \
         record->fields = fields_array;                                              \
         if (add_struct_to_db(struct_db, record)) {                                  \
             assert(0);                                                              \

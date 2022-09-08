@@ -1,0 +1,9 @@
+
+### Udemy course related files
+udemy_assignments/
+udemy_repo/
+
+.vscode/
+
+*.out
+*.gch

@@ -64,6 +64,7 @@ void print_structure_rec(struct_db_rec_t *struct_rec)
     printf("----------------------------------------------------------------------------------------------------------------------------------------------------------------\n");
 }
 
+
 void print_structure_db(struct_db_t *struct_db)
 {
     struct_db_rec_t *cur_rec;
@@ -125,14 +126,16 @@ struct_db_rec_t *struct_db_look_up(struct_db_t *struct_db, char *struct_name)
     return NULL;
 }
 
+
 void print_obj_db_rec(object_db_rec_t *obj_rec, int index)
 {
     if (!obj_rec) return;
 
-    printf("------------------------------------------------------------------------\n");
-    printf("| %-3d | memory_loc = %-10p | units = %4d | name = %-10s |\n",
-           index, obj_rec->obj_ptr, obj_rec->units, obj_rec->struct_rec->struct_name);
+    printf("------------------------------------------------------------------------------------------\n");
+    printf("| %-3d | memory_loc = %-10p | units = %4d | name = %-10s | is_root = %s |\n",
+           index, obj_rec->obj_ptr, obj_rec->units, obj_rec->struct_rec->struct_name, obj_rec->is_root ? "True" : "False");
 }
+
 
 void print_obj_db(object_db_t *obj_db)
 {
@@ -151,7 +154,7 @@ void print_obj_db(object_db_t *obj_db)
         i++;
     }
 
-    printf("------------------------------------------------------------------------\n\n");
+    printf("------------------------------------------------------------------------------------------\n\n");
 }
 
 /*
@@ -205,18 +208,19 @@ void *mld_calloc(object_db_t *object_db, char *struct_name, int units)
 {
     if (!object_db || !struct_name) return NULL;
 
-    // Get associated struct record from struct db.
+    /* Get associated struct record from struct db. */
     struct_db_rec_t *struct_rec = struct_db_look_up(object_db->struct_db, struct_name);
-    // Check that associated struct record exists.
+    /* Check that associated struct record exists. */
     assert(struct_rec);
-    // Allocate space for the object.
+    /* Allocate space for the object. */
     void *allocated_obj = calloc(units, struct_rec->ds_size);
-    // Add object to object db. Object is not considered root by default.
+    /* Add object to object db. Object is not considered root by default. */
     if (add_obj_to_db(object_db, allocated_obj, units, struct_rec, MLD_FALSE)) {
         assert(0);
     }
     return allocated_obj;
 }
+
 
 void mld_dump_object_rec_detail(object_db_rec_t *obj_rec)
 {
@@ -269,13 +273,14 @@ void mld_dump_object_rec_detail(object_db_rec_t *obj_rec)
     }
 }
 
+
 void remove_obj_rec_from_db(object_db_t *object_db, object_db_rec_t *obj_rec)
 {
     assert(object_db);
     assert(obj_rec);
 
     object_db_rec_t *cur_rec = object_db->head;
-    // Remove record from object db
+    /* Remove record from object db */
     if (cur_rec == obj_rec) {
         object_db->head = obj_rec->next;
     } else {
@@ -288,6 +293,7 @@ void remove_obj_rec_from_db(object_db_t *object_db, object_db_rec_t *obj_rec)
     free(obj_rec);
 }
 
+
 void mld_free(object_db_t *object_db, void *object)
 {
     if (!object_db || !object) return;
@@ -298,11 +304,11 @@ void mld_free(object_db_t *object_db, void *object)
 
     assert(obj_rec);
 
-    // Free object
+    /* Free the object before freeing the record */
     free(obj_rec->obj_ptr);
-
     remove_obj_rec_from_db(object_db, obj_rec);
 }
+
 
 void register_root_object(object_db_t *object_db, void *object, char *struct_name, unsigned int units)
 {
@@ -329,3 +335,134 @@ void add_object_as_global_root(object_db_t *object_db, void *object)
 }
 
 
+/*
+    Initializes the given object database for traversal by marking all
+    records as not visited.
+*/
+void init_mld_check(object_db_t *object_db)
+{
+    assert(object_db);
+    object_db_rec_t *cur_rec = object_db->head;
+    while (cur_rec) {
+        cur_rec->visited = MLD_FALSE;
+        cur_rec = cur_rec->next;
+    }
+}
+
+/* 
+    Explores the direct children of the given parent object and marks them
+    as visited.
+*/
+void explore_from_root(object_db_t *object_db, object_db_rec_t *parent_obj_rec)
+{
+    assert(object_db);
+    assert(parent_obj_rec);
+    assert(parent_obj_rec->visited);  // Parent obj must have been visited
+
+    unsigned int i, field_num;
+    char *parent_obj_ptr = NULL,
+         *child_obj_offset = NULL;
+    void *child_obj_address = NULL;
+    field_info_t *field_info = NULL;
+    object_db_rec_t *child_obj_rec = NULL;
+    struct_db_rec_t *parent_struct_rec = parent_obj_rec->struct_rec;
+
+    /* Explore the child objects of each object in the parent object's record */
+    for (i = 0; i < parent_obj_rec->units; i++) {
+
+        parent_obj_ptr = (char *)(parent_obj_rec->obj_ptr) + (i * parent_struct_rec->ds_size);
+
+        /* Explore the fields containing pointers to other objects */
+        for (field_num = 0; parent_struct_rec->n_fields; field_num++) {
+
+            field_info = &parent_struct_rec->fields[field_num];
+
+            /* Only recurse on object pointers */
+            if (!(field_info->dtype == OBJ_PTR))
+                break;
+
+            /* Have the child_obj_address variable point to the child object */
+            child_obj_offset = parent_obj_ptr + field_info->offset;
+            memcpy(&child_obj_address, child_obj_offset, sizeof(void *));
+
+            assert(child_obj_address);
+
+            child_obj_rec = find_obj_rec(object_db, child_obj_address);
+
+            assert(child_obj_rec);
+
+            /* Since this child is reachable from a root, mark it as visited and 
+               recurse on its children. */
+            if (!child_obj_rec->visited) {  // Prevent infinite recursion
+                child_obj_rec->visited = MLD_TRUE;
+                explore_from_root(object_db, child_obj_rec);
+            }
+        }
+    }
+}
+
+
+/*
+    Gets the next root in the given object_db from the given starting object.
+    The start parameter is assumed to be a pointer to a record in the given object_db.
+*/
+object_db_rec_t *get_next_root_obj(object_db_t *object_db, object_db_rec_t *start)
+{
+    assert(object_db);
+
+    /* If start is not provided get the head of the ll */
+    object_db_rec_t *cur = start ? start->next : object_db->head;
+
+    while(cur) {
+        if (cur->is_root) {
+            return cur;
+        }
+        cur = cur->next;
+    }
+    
+    return NULL;
+}
+
+
+void run_mld_check(object_db_t *object_db)
+{
+    assert(object_db);
+    /* Mark all objects in object_db as unvisited. */
+    init_mld_check(object_db);
+    /* Get first root object. */
+    object_db_rec_t *cur_root = get_next_root_obj(object_db, NULL);
+
+    while (cur_root) {
+        /* If the root was already visited, get next root */
+        if (cur_root->visited) {
+            cur_root = get_next_root_obj(object_db, cur_root);
+            continue;
+        }
+
+        /* Visit all objects from root */
+        cur_root->visited = MLD_TRUE;
+
+        /* Find all objects reachable from root */
+        explore_from_root(object_db, cur_root);
+    }
+}
+
+
+void print_leaked_objects(object_db_t *object_db)
+{
+    assert(object_db);
+
+    unsigned int count;
+    object_db_rec_t *cur_obj_rec;
+
+    cur_obj_rec = object_db->head;
+
+    while (cur_obj_rec) {
+        if (!cur_obj_rec->visited) {
+            print_obj_db_rec(cur_obj_rec, count++);
+            mld_dump_object_rec_detail(cur_obj_rec);
+            printf("\n\n");
+        }
+        cur_obj_rec = cur_obj_rec->next;
+    }
+}

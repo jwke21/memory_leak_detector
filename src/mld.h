@@ -96,7 +96,7 @@ void print_structure_rec(struct_db_rec_t *struct_rec);
    Prints all struct records in a given struct 
    record database.
 */
-void print_structure_db(struct_db_t *srtuct_db);
+void print_structure_db(struct_db_t *struct_db);
 
 
 /***** Functions/Macros to register and add struct records in db *****/
@@ -154,7 +154,7 @@ struct _object_db_rec_
 {
     object_db_rec_t *next;
     void *obj_ptr;               // Pointer to C app object associated with record.
-    unsigned int units;          // Number of objects of the record calloc'd.
+    unsigned int units;          // Number of objects of this type that the record calloc'd.
     struct_db_rec_t *struct_rec; // struct_db record associated with object.
     mld_boolean_t visited;       // For graph traversal.
     mld_boolean_t is_root;       // Whether the object is a root object.
@@ -227,8 +227,16 @@ void add_object_as_global_root(object_db_t *object_db, void *object);
 
 /***** Memory leak detection functions *****/
 
+/*
+    Checks for leaked objects in the given object database.
+*/
 void run_mld_check(object_db_t *object_db);
 
+/*
+    Prints the objects in the given object database that are determined
+    to be leaked. Only works after having called run_mld_check on the
+    given object_db. 
+*/
 void print_leaked_objects(object_db_t *object_db);
 
 

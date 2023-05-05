@@ -1,3 +1,7 @@
+/*
+    This is an example C application that demonstrates how the MLD library is
+    meant to be used.
+*/
 #include <memory.h>
 #include <stdlib.h>
 
